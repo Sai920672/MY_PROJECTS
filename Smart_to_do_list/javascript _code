@@ -1,0 +1,81 @@
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+let dragIndex = null;
+
+function saveTasks() {
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+}
+
+function renderTasks() {
+    const list = document.getElementById("taskList");
+    list.innerHTML = "";
+
+    tasks.forEach((task, index) => {
+        let li = document.createElement("li");
+        li.draggable = true;
+
+        // Task text + category
+        let span = document.createElement("span");
+        span.innerHTML = `${task.text} <span class="category">(${task.category})</span>`;
+
+        if (task.completed) span.classList.add("completed");
+
+        span.onclick = () => {
+            tasks[index].completed = !tasks[index].completed;
+            saveTasks();
+            renderTasks();
+        };
+
+        // Delete button
+        let del = document.createElement("button");
+        del.textContent = "X";
+        del.onclick = (e) => {
+            e.stopPropagation();
+            tasks.splice(index, 1);
+            saveTasks();
+            renderTasks();
+        };
+
+        li.appendChild(span);
+        li.appendChild(del);
+
+        // Drag events
+        li.addEventListener("dragstart", () => {
+            dragIndex = index;
+        });
+
+        li.addEventListener("dragover", (e) => {
+            e.preventDefault();
+        });
+
+        li.addEventListener("drop", () => {
+            const temp = tasks[dragIndex];
+            tasks[dragIndex] = tasks[index];
+            tasks[index] = temp;
+
+            saveTasks();
+            renderTasks();
+        });
+
+        list.appendChild(li);
+    });
+}
+
+function addTask() {
+    const input = document.getElementById("taskInput");
+    const category = document.getElementById("category").value;
+
+    const text = input.value.trim();
+    if (text === "") return;
+
+    tasks.push({
+        text: text,
+        category: category,
+        completed: false
+    });
+
+    input.value = "";
+    saveTasks();
+    renderTasks();
+}
+
+renderTasks();
